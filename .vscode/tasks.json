@@ -1,0 +1,20 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "cppbuild",
+			"label": "Custom: C/C++: python build and run active file using cmake",
+			"command": "cpp_cargo",
+			"args": [
+				
+				"run",
+
+			],
+			"options": {
+				"cwd": "${fileDirname}"
+			},
+			"group": "build",
+			"detail": "compiler: g++"
+		}
+	],
+}
