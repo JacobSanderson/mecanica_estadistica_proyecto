@@ -17,6 +17,7 @@
 // globals
 std::size_t noOfParticles = 200;
 std::vector<particle*> particles;
+std::vector<sf::Vector2f> forces(noOfParticles);
 
 float coeffDifusion = 1.0;
 float temperature = 293.0;
@@ -26,10 +27,11 @@ float dt = 0.1;
 // del dia 15 de septiembre 2022
 void update(const sf::RenderWindow &w){ 
     const auto size = sf::Vector2f( w.getSize().x, w.getSize().y );
-    for (auto &p: particles){
-        updatePosition( *p, dt);
+
+    updatePositions( particles, dt, forces);
+    // calculateCoulombForce( *p, dt);
+    for (auto &p: particles)
         handleWallCollitions( *p, size);
-    }
 }
 
 std::random_device rd{};
@@ -46,17 +48,19 @@ std::vector<float> getRandomNumGauss(const std::size_t size, const float min=0.0
     return res;
 }
 
+
 int main() {
     sf::RenderWindow window(sf::VideoMode(1366, 768), "Tarea Estadistica", sf::Style::Fullscreen);
     // window.
     window.setFramerateLimit(60);
     ImGui::SFML::Init(window);
 
+    // inicializando las particulas
     auto size = window.getSize();
     for (size_t i = 0; i < noOfParticles; i++){
         std::vector<float> random = getRandomNumGauss( 2, 0.0, 1.0 );
-        sf::Vector2f ipos{ random[0]*size.x, random[1]*size.y };
-        particles.push_back( new particle(ipos, {random[0], random[1]}, 5.0f) );
+        sf::Vector2f ipos{ random[0]*size.x * 0.5, random[1]*size.y };
+        particles.push_back( new particle(ipos, {random[0], random[1]}, 5.0f, 1, 1) );
     }
 
     // for (auto &p: particles)
@@ -64,6 +68,8 @@ int main() {
     // sf::Font();
     bool actualizar = true;
     sf::Clock deltaClock;
+    auto iTime = deltaClock.getElapsedTime();
+    sf::Time fTime;
     while (window.isOpen()) {
         sf::Event event;
         while (window.pollEvent(event)) {
@@ -79,9 +85,13 @@ int main() {
         ImGui::Text( "Tamaño de la pantalla (%d, %d)", size.x, size.y );
         ImGui::Text( "Numero de Particulas %ld", noOfParticles );
         ImGui::Text( "time elapsed : %d ms", deltaClock.getElapsedTime().asMilliseconds() );
-        ImGui::SliderFloat("dt", &dt, 0.01, 3.0);
-        // ImGui::Text( "dt = %f", dt );
+        
+
+
+        ImGui::SliderFloat("dt", &dt, -3.0, 3.0);
         ImGui::Checkbox("update", &actualizar);
+
+
         if (ImGui::TreeNode("particles")){
             static ImGuiTableFlags flags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg;
             const int noOfCols = 4;
@@ -118,9 +128,35 @@ int main() {
             }
         ImGui::TreePop();
         }
+        if (ImGui::TreeNode("forces")){
+            static ImGuiTableFlags flags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg;
+            if (ImGui::BeginTable("forces all", 2, flags))
+            {
+                ImGui::TableSetupColumn("index");
+                ImGui::TableSetupColumn("force");
+                ImGui::TableHeadersRow();
+                for (size_t i = 0; i < forces.size(); i++){
+                    ImGui::TableNextRow();
+                    std::string s;
 
+                    ImGui::TableSetColumnIndex(0);
+                    s = fmt::format("{}", i);
+                    ImGui::TextUnformatted(s.c_str());
+                    ImGui::TableSetColumnIndex(1);
+                    s = fmt::format("({:08.5}, {:08.5})", forces.at(i).x, forces.at(i).y);
+                    ImGui::TextUnformatted(s.c_str());
+                }
+            ImGui::EndTable();
+            }
+        ImGui::TreePop();
+        }
 
         if(actualizar) update(window);
+
+        fTime = deltaClock.getElapsedTime();
+        auto dtime = fTime - iTime;
+        ImGui::Text( "fps : %.2f", 1/float(dtime.asSeconds()) );
+        iTime = fTime;
 
         window.clear();
         for (auto &pt: particles) window.draw(pt->shape);
