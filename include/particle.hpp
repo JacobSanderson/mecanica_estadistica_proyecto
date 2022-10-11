@@ -54,3 +54,23 @@ struct particle {
 
   float getKineticEnergy() { return 0.5 * m * (vel.x*vel.x + vel.y*vel.y); }
 };
+
+struct box {
+  float x;
+  float y;
+  float w;
+  float h;
+  sf::RectangleShape shape;
+
+  box(float x, float y, float width, float height) : x{x}, y{y}, w{width}, h{height} {
+    shape = sf::RectangleShape({w,h});
+    // shape.setOrigin(x,y);
+    shape.move( x, y );
+    shape.setOutlineColor({255,255,255,255});
+    shape.setFillColor({255,255,255,0});
+    shape.setOutlineThickness( 1.0 );
+  }
+
+  box(){ }
+
+};

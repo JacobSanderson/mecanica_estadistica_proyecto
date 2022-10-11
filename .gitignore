@@ -1,2 +1,3 @@
 # no submitas el directorio build
 /build/*
+/.vscode/*
